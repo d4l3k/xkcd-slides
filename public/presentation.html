@@ -1,0 +1,101 @@
+<div id="response"></div>
+<div id="word"></div>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  color: white;
+}
+body {
+  height: 100%;
+  width: 100%;
+  background: url(http://presentation.jpg.to) no-repeat center center fixed;
+  -webkit-background-size: contain;
+  -moz-background-size: contain;
+  -o-background-size: contain;
+  background-size: contain;
+}
+</style>
+<script>
+function showPhrase(word) {
+  var cleaned = word.slice(0,50).trim().replace(/\s+/g, '-').replace(/\./g, '');
+  document.body.style.backgroundImage = 'url(http://' +
+    cleaned+'.jpg.to)';
+}
+showPhrase('xkcd slides presentation');
+function showInfo(msg) {
+  document.getElementById('response').innerText = msg;
+}
+if (!('webkitSpeechRecognition' in window)) {
+} else {
+  var recognition = new webkitSpeechRecognition();
+  var start_timestamp;
+  var final_transcript, interim_transcript, ignore_onend;
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = function() {
+    recognizing = true;
+    showInfo('info_speak_now');
+  };
+
+  recognition.onerror = function(event) {
+    if (event.error == 'no-speech') {
+      showInfo('info_no_speech');
+      ignore_onend = true;
+    }
+    if (event.error == 'audio-capture') {
+      showInfo('info_no_microphone');
+      ignore_onend = true;
+    }
+    if (event.error == 'not-allowed') {
+      console.log(event);
+      if (event.timeStamp - start_timestamp < 100) {
+        showInfo('info_blocked');
+      } else {
+        showInfo('info_denied');
+      }
+      ignore_onend = true;
+    }
+  };
+
+  recognition.onend = function() {
+    recognizing = false;
+    if (ignore_onend) {
+      return;
+    }
+    if (!final_transcript) {
+      showInfo('info_start');
+      return;
+    }
+    showInfo('');
+    recognition.start();
+  };
+
+  recognition.onresult = function(event) {
+    console.log(event);
+    var interim_transcript = '';
+    if (typeof(event.results) == 'undefined') {
+      recognition.onend = null;
+      recognition.stop();
+      return;
+    }
+    for (var i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        final_transcript += event.results[i][0].transcript;
+      } else {
+        interim_transcript += event.results[i][0].transcript;
+      }
+    }
+    var word = event.results[event.results.length-1][0].transcript;
+    console.log(word);
+    document.getElementById('word').innerText = word;
+    showPhrase(word);
+  };
+}
+
+recognition.lang = 'en-US';
+recognition.start();
+start_timestamp = new Date();
+</script>
