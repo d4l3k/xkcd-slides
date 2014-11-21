@@ -1,5 +1,5 @@
 require 'sinatra'
 
 get '/' do
-  '<a href="/presentation.html">Presentation</a>'
+  File.read('index.html')
 end
